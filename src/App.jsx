@@ -403,4 +403,75 @@ export default function App() {
                     <input name="email" type="email" placeholder="Email" className="w-full px-3 py-2 rounded-lg border border-ink/15 text-sm" required />
                     <input name="password" type="password" placeholder="Password (kam se kam 6 characters)" className="w-full px-3 py-2 rounded-lg border border-ink/15 text-sm" required minLength={6} />
                     {error && <p className="text-sm text-red-600">{error}</p>}
-                    <button dis
+                    <button disabled={busy} type="submit" className="w-full py-2 rounded-full bg-brand text-white font-semibold text-sm disabled:opacity-60">
+                      {busy ? "Ruk jaayein..." : authMode === "login" ? "Login" : "Account banayein"}
+                    </button>
+                  </form>
+                </>
+              )}
+            </Card>
+          </div>
+        )}
+
+        {view === "add" && session && (
+          <div className="max-w-lg mx-auto">
+            <h2 className="font-display text-2xl font-bold mb-4">Room list karein</h2>
+            <Card className="p-6">
+              <form onSubmit={handleAddRoom} className="space-y-3">
+                <input name="title" placeholder="Title (e.g. Sunny single room near metro)" className="w-full px-3 py-2 rounded-lg border border-ink/15 text-sm" required />
+                <div className="grid grid-cols-2 gap-3">
+                  <input name="rent" type="number" placeholder="Rent (₹/month)" className="w-full px-3 py-2 rounded-lg border border-ink/15 text-sm" required />
+                  <select name="roomType" className="w-full px-3 py-2 rounded-lg border border-ink/15 text-sm">
+                    {ROOM_TYPES.map((t) => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+                <input name="location" placeholder="Location / area, city" className="w-full px-3 py-2 rounded-lg border border-ink/15 text-sm" required />
+                <input name="contact" placeholder="Contact number" className="w-full px-3 py-2 rounded-lg border border-ink/15 text-sm" required />
+
+                <div>
+                  <label className="text-xs font-medium text-ink/60 flex items-center gap-1 mb-1"><Upload size={12} /> Room ki photo</label>
+                  <input type="file" accept="image/*" onChange={onPhotoChange} className="w-full text-sm" />
+                  {photoPreview && <img src={photoPreview} alt="preview" className="mt-2 h-32 rounded-lg object-cover" />}
+                </div>
+
+                {error && <p className="text-sm text-red-600">{error}</p>}
+                <button disabled={busy} type="submit" className="w-full py-2 rounded-full bg-brand text-white font-semibold text-sm disabled:opacity-60">
+                  {busy ? "Upload ho raha hai..." : "Room daalein"}
+                </button>
+              </form>
+            </Card>
+          </div>
+        )}
+
+        {view === "mine" && session && (
+          <div>
+            <h2 className="font-display text-2xl font-bold mb-4">Mere listings</h2>
+            {myRooms.length === 0 ? (
+              <p className="text-ink/50">Abhi tak koi listing nahi. <button onClick={() => setView("add")} className="text-brand font-medium underline">Pehla room daalein</button>.</p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {myRooms.map((r) => (
+                  <Card key={r.id} className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-semibold font-display">{r.title}</h3>
+                      <button onClick={() => handleDeleteRoom(r.id)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
+                    </div>
+                    <p className="text-sm text-ink/60 flex items-center gap-1 mt-1"><MapPin size={13} /> {r.location}</p>
+                    <p className="text-sm mt-1 flex items-center gap-1"><IndianRupee size={13} />{Number(r.rent).toLocaleString("en-IN")}/mo · {r.room_type}</p>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {(view === "add" || view === "mine") && !session && (
+          <div className="text-center py-16">
+            <p className="text-ink/60 mb-3">Yeh feature use karne ke liye login karein.</p>
+            <button onClick={() => setView("auth")} className="px-4 py-2 rounded-full bg-brand text-white text-sm font-semibold">Login / Sign up</button>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
