@@ -294,9 +294,7 @@ export default function Plots({ session }) {
       setNotice("Report darj ho gayi. Dhanyavaad, hum review karenge.");
       setTimeout(() => setNotice(""), 2500);
     }
-  }
-
-  const filteredPlots = plots.filter((p) => {
+    }const filteredPlots = plots.filter((p) => {
     if (fLocation && !p.location_text.toLowerCase().includes(fLocation.toLowerCase())) return false;
     if (fMaxPrice && p.price > Number(fMaxPrice)) return false;
     return true;
@@ -437,4 +435,112 @@ export default function Plots({ session }) {
           <Card className="p-6">
             <form ref={formRef} onSubmit={handleAddPlot} className="space-y-4">
               <input name="title" placeholder="Title (e.g. Corner plot near highway)" className="w-full px-3 py-2 rounded-lg border border-ink/15 text-sm" required />
-              <textarea name="description" placeholder="Details (road access, facing, nearby landmarks...)" rows={2} className="w-full px-3 py-2 rounded-lg bord
+              <textarea name="description" placeholder="Details (road access, facing, nearby landmarks...)" rows={2} className="w-full px-3 py-2 rounded-lg border border-ink/15 text-sm" />
+
+              <div className="grid grid-cols-2 gap-3">
+                <input name="price" type="number" placeholder="Price (₹)" className="w-full px-3 py-2 rounded-lg border border-ink/15 text-sm" required />
+                <div className="flex gap-2">
+                  <input name="sizeValue" type="number" placeholder="Size" className="w-1/2 px-3 py-2 rounded-lg border border-ink/15 text-sm" required />
+                  <select name="sizeUnit" className="w-1/2 px-2 py-2 rounded-lg border border-ink/15 text-sm">
+                    {SIZE_UNITS.map((u) => <option key={u}>{u}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <input name="locationText" placeholder="City / Village, area" className="w-full px-3 py-2 rounded-lg border border-ink/15 text-sm" required />
+
+              {/* Map pin */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-medium text-ink/60 flex items-center gap-1"><MapPin size={12} /> Exact location (map par pin lagayein)</label>
+                  <button type="button" onClick={useMyLocation} className="text-xs text-brand flex items-center gap-1 font-medium"><LocateFixed size={13} /> Meri location use karein</button>
+                </div>
+                <div className="h-48 rounded-xl overflow-hidden border border-ink/15">
+                  <MapContainer center={pinLat ? [pinLat, pinLng] : DEFAULT_CENTER} zoom={pinLat ? 15 : 5} style={{ height: "100%", width: "100%" }}>
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap contributors' />
+                    <LocationPicker lat={pinLat} lng={pinLng} onPick={(lat, lng) => { setPinLat(lat); setPinLng(lng); }} />
+                  </MapContainer>
+                </div>
+                {!pinLat && <p className="text-xs text-ink/40 mt-1">Map par tap karke exact plot ki jagah pin karein.</p>}
+              </div>
+
+              {/* Live photo capture */}
+              <div>
+                <label className="text-xs font-medium text-ink/60 flex items-center gap-1 mb-1"><Camera size={12} /> Plot ki live photo (camera se seedhi kheenchein)</label>
+                <input type="file" accept="image/*" capture="environment" onChange={onPhotoChange} className="w-full text-sm" required />
+                {photoPreview && <img src={photoPreview} alt="preview" className="mt-2 h-32 rounded-lg object-cover" />}
+                {distanceWarning && <p className="text-xs text-amber-700 mt-1">{distanceWarning}</p>}
+              </div>
+
+              {/* Video */}
+              <div>
+                <label className="text-xs font-medium text-ink/60 flex items-center gap-1 mb-1"><Video size={12} /> Plot ka video (optional, lekin trust badhta hai)</label>
+                <input type="file" accept="video/*" capture="environment" onChange={onVideoChange} className="w-full text-sm" />
+                {videoPreview && <video src={videoPreview} controls className="mt-2 h-32 rounded-lg w-full object-cover" />}
+              </div>
+
+              {/* Document */}
+              <div>
+                <label className="text-xs font-medium text-ink/60 flex items-center gap-1 mb-1"><Upload size={12} /> Ownership proof (registry/khasra) — sirf record ke liye, public nahi dikhta</label>
+                <input type="file" accept="image/*,.pdf" onChange={(e) => setDocFile(e.target.files?.[0] || null)} className="w-full text-sm" />
+              </div>
+
+              {/* Phone verify */}
+              <div className="p-3 rounded-xl bg-brandlight/50 border border-brand/10">
+                <label className="text-xs font-medium text-ink/60 flex items-center gap-1 mb-1"><Phone size={12} /> Contact number verify karein</label>
+                <div className="flex gap-2">
+                  <input name="contact" value={phone} onChange={(e) => { setPhone(e.target.value); setPhoneStage("idle"); }} placeholder="10-digit mobile number" disabled={phoneStage === "verified"} className="flex-1 px-3 py-2 rounded-lg border border-ink/15 text-sm disabled:bg-ink/5" required />
+                  {phoneStage !== "verified" && (
+                    <button type="button" onClick={sendOtp} disabled={phoneBusy} className="px-3 py-2 rounded-lg bg-brand text-white text-xs font-semibold whitespace-nowrap">
+                      {phoneBusy ? "..." : "OTP Bhejein"}
+                    </button>
+                  )}
+                </div>
+                {phoneStage === "sent" && (
+                  <div className="flex gap-2 mt-2">
+                    <input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="6-digit OTP" className="flex-1 px-3 py-2 rounded-lg border border-ink/15 text-sm" />
+                    <button type="button" onClick={verifyOtp} disabled={phoneBusy} className="px-3 py-2 rounded-lg bg-brand text-white text-xs font-semibold">Verify</button>
+                  </div>
+                )}
+                {phoneMsg && <p className="text-xs mt-1.5 text-ink/60">{phoneMsg}</p>}
+                {phoneStage === "verified" && <p className="text-xs mt-1.5 text-emerald-700 flex items-center gap-1"><ShieldCheck size={13} /> Number verified</p>}
+              </div>
+
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <button disabled={busy} type="submit" className="w-full py-2.5 rounded-full bg-brand text-white font-semibold text-sm disabled:opacity-60">
+                {busy ? "Upload ho raha hai..." : "Plot List Karein"}
+              </button>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* MY PLOTS */}
+      {view === "mine" && session && (
+        <div>
+          {myPlots.length === 0 ? (
+            <p className="text-ink/50">Abhi tak koi plot listed nahi. <button onClick={() => setView("add")} className="text-brand font-medium underline">Pehla plot daalein</button>.</p>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-4">
+              {myPlots.map((p) => (
+                <Card key={p.id} className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-semibold font-display">{p.title}</h3>
+                    <button onClick={() => handleDeletePlot(p.id)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
+                  </div>
+                  <p className="text-sm text-ink/60 flex items-center gap-1 mt-1"><MapPin size={13} /> {p.location_text}</p>
+                  <p className="text-sm mt-1 flex items-center gap-1"><IndianRupee size={13} />{Number(p.price).toLocaleString("en-IN")} · {p.size_value} {p.size_unit}</p>
+                  <div className="mt-2"><TrustBadges p={p} /></div>
+                  {p.report_count > 0 && <p className="text-xs text-red-500 mt-2">⚠️ {p.report_count} report(s) mila hai.</p>}
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {(view === "add" || view === "mine") && !session && (
+        <div className="text-center py-16">
+          <p className="text-ink/60 mb-3">Plot list karne ke liye login karein.</p>
+        </div>
+      )}
