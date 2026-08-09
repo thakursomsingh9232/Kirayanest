@@ -544,3 +544,6 @@ export default function Plots({ session }) {
           <p className="text-ink/60 mb-3">Plot list karne ke liye login karein.</p>
         </div>
       )}
+</div>
+  );
+}
